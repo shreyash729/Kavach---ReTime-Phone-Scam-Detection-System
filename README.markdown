@@ -26,8 +26,8 @@ scam-detection-app/
 ## Setup Instructions
 1. **Clone the Repository**
    ```bash
-   git clone <repository-url>
-   cd scam-detection-app
+   git clone https://github.com/shreyash729/Kavach---ReTime-Phone-Scam-Detection-System.git
+   cd Kavach---ReTime-Phone-Scam-Detection-System
    ```
 
 2. **Install Dependencies**
@@ -36,15 +36,24 @@ scam-detection-app/
    pip install flask flask-socketio eventlet vosk pyaudio numpy telethon
    ```
 
-3. **Download Vosk Model**
-   - Download the `vosk-model-small-hi-0.22` from [Vosk Models](https://alphacephei.com/vosk/models).
-   - Extract the model to the `vosk-model-small-hi-0.22` directory in the project root.
-
-4. **Configure Telegram API**
+3. **creates a virtual environment**:
+   ```bash
+   python -m venv venv
+   ```
+   
+4. **Configure Telegram environment Variables**:
    - Obtain your Telegram API credentials from [my.telegram.org](https://my.telegram.org).
-   - Update `app.py` with your `API_ID`, `API_HASH`, and `PHONE_NUMBER`.
+   ```bash
+   set TELEGRAM_API_ID=YOUR_TELEGRAM_API_ID   # your telegram api ID
+   ```
+   ```bash
+   set TELEGRAM_API_HASH=YOUR_TELEGRAM_API_HASH   # your telegram api hash
+   ```
+   ```bash
+   set PHONE_NUMBER=PHONE_NUMBER   # Your phone number Include country code (e.g., +91xxxxxx)
+   ```
 
-5. **Run the Application**
+6. **Run the Application**
    ```bash
    python app.py
    ```
@@ -75,6 +84,8 @@ scam-detection-app/
 - Ensure a working microphone for audio input.
 - The Vosk model path must be correctly set in `app.py`.
 - Telegram bot (`@TrueCaller_Z_Bot`) must be accessible and responsive.
+- Replace `vosk-model-small-hi-0.22` with `vosk-model-hi-0.22` for better Accuracy
+- Download Vosk NLP model from `https://alphacephei.com/vosk/models`
 
 ## Contributing
 1. Fork the repository.
