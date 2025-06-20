@@ -1,4 +1,4 @@
-# Scam Detection Web Application
+# KAVACH - Scam Detection Application
 
 ## Overview
 This is a Flask-based web application designed to detect potential scam calls in real-time using speech recognition with the Vosk model and phone number lookup via a Telegram bot. The app monitors audio input for scam-related keywords in Hindi and alerts users if a threshold is exceeded. It also allows users to look up phone numbers for additional details.
