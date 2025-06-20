@@ -43,6 +43,7 @@ scam-detection-app/
    
 4. **Configure Telegram environment Variables**:
    - Obtain your Telegram API credentials from [my.telegram.org](https://my.telegram.org).
+     
    ```bash
    set TELEGRAM_API_ID=YOUR_TELEGRAM_API_ID   # your telegram api ID
    ```
