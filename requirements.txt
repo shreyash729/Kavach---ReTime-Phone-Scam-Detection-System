@@ -1,0 +1,6 @@
+Flask==2.0.1
+Flask-SocketIO==5.1.1
+pyaudio==0.2.11
+vosk==0.3.32
+telethon==1.24.0
+numpy==1.22.0

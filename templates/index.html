@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kavach - Fraud Detection</title>
+    
+<link rel="stylesheet" href="https://public.codepenassets.com/css/normalize-5.0.0.min.css">
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.2/animate.min.css'>
+<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Lato:100,300,400,400i,700'>
+<link rel='stylesheet' href='https://fonts.googleapis.com/icon?family=Material+Icons'>
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css'>
+    <link rel="stylesheet" href="./../static/style.css">
+    
+</head>
+<style>
+    #IncomingCallInterface{
+        display: none;
+    }
+    #fraud-alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            display: none;
+        }
+        input, select, textarea{
+            color: black;
+        }
+</style>
+<body>
+    <div id="IncomingCallInterface">
+        <div class="flex flex-column items-center justify-center wrapper-caller-info" style="min-height: 100%;">
+            <section class="caller-info flex flex-column items-center flex-auto justify-center">
+                <div class="circle avatar-caller mb4">
+                <div class="ripple-wave">
+                    <div class="ripple-wave-2"></div>
+                </div>
+                    <img class="circle" src="https://cdn-icons-png.flaticon.com/512/1053/1053244.png" alt="">
+                </div>
+                <center>
+                <h6 id="counter" style="color: blanchedalmond;"></h6>
+                <div id="caller-info">
+                </div>
+                </center>
+                <!--
+            -->
+               </section>
+               <section class="call-buttons flex justify-between">
+                <div class="btn-floating-label" id="reject-call">
+                 <a class="btn-floating btn-jumbo waves-effect waves-light danger" ><i class="material-icons">phone</i></a>
+                 <h4 for="reject">Reject Call</h4>
+                </div>
+                <div class="btn-floating-label"  id="accept-call">
+                 <a class="btn-floating btn-jumbo waves-effect waves-light success" ><i class="material-icons">phone</i></a>
+                 <h4 for="reject">Accept Call</h4>
+                </div>
+               </section>
+        </div>
+    </div>
+    <div class="container" id="beforeCall">
+        <div class="row">
+            <div class="col s12 m8 offset-m2">
+                <div class="card caller-card">
+                    <div class="card-content center-align">
+                        <form id="lookup-form">
+                            <div class="input-field">
+                                <input id="phone-number" type="text" required>
+                                <label for="phone-number">Enter Phone Number</label>
+                            </div>
+                            <button class="btn waves-effect waves-light" id="submit_btn" type="submit">
+                                Lookup <i class="material-icons right">search</i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="fraud-alert" class="card red white-text">
+        <div class="card-content">
+            <span class="card-title">🚨 Fraud Detected!</span>
+            <p>Multiple scam keywords detected during call</p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    
+    <script>
+        function parseTrueCallerInfo(input) {
+            let x = 0;
+            let temp = input.toLowerCase();
+            if(temp.includes("spam") || temp.includes("scam") || temp.includes("fraud") || temp.includes("scammer")){
+                x = 1;
+            }
+            const numberMatch = input.match(/\*\*Number:\s\*\*\*\*(.*?)\*\*/);
+            const countryMatch = input.match(/\*\*Country:\s(.*?)\s/);
+            const carrierMatch = input.match(/\*\*Carrier:\*\*\s`(.*?)`/);
+            const locationMatch = input.match(/\*\*Location:\*\*\s`(.*?)`/);
+            const unknownNameMatch = input.match(/\*\*Name:\*\*\s`(.*?)`/);
+            const nameMatch = input.match(/Unknown Says:\*\* \*\*Name:\*\*\s`(.*?)`/);
+
+            return {
+                Number: numberMatch ? numberMatch[1].trim() : null,
+                Country: countryMatch ? countryMatch[1].trim() : null,
+                Location: carrierMatch && locationMatch ? `${carrierMatch[1]} ${locationMatch[1]}`.trim() : null,
+                "Kavach Says": unknownNameMatch ? unknownNameMatch[1].trim() : null,
+                Name: nameMatch ? nameMatch[1].trim() : null, // Add Name here
+                "isspam" : x
+            };
+        }
+        //const socket = io();
+        const socket = io();
+        socket.on('connect', () => {
+            console.log('Connected to Socket.IO server');
+        });
+        socket.emit('client_event', {data: 'hello from client'});
+        socket.on('server_event', function(data) {
+            console.log('Received from server:', data);
+        });
+        socket.on('connect_error', (error) => {
+            console.error("Socket.IO connection error:", error);
+            M.toast({html: 'Connection error. Please refresh the page.'});
+        });
+
+        socket.on('disconnect', () => {
+            console.warn("Socket.IO disconnected");
+            M.toast({html: 'Disconnected from server. Reconnecting...'});
+        });
+        socket.on('scam_alert', (data) => {
+            M.toast({html: `Potential scam detected (${data.count}/${data.threshold})`});
+        });
+
+        socket.on('fraud_detected', () => {
+            console.log("Fraud detected! Showing SweetAlert...");
+            Swal.fire({
+                    title: "<strong>Scam Alert</strong>",
+                    icon: "warning",
+                    html: `
+                        <h4><strong>KAVACH HAS DETECTED THIS CALL AS SCAM</strong></h4>
+                        <br>
+                        <h5><strong><u>Please do not share any OTP/PASSWORD over this call</u></strong></h5>
+                    `,
+                    showCloseButton: true,
+                    showCancelButton: true,
+                    focusConfirm: false,
+                    confirmButtonText: `
+                       Report the Call As spam
+                    `,
+                    cancelButtonText: `
+                        Keep Monetering
+                    `,
+                    
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire("Call reported successfully", "", "success");
+                    location.reload();
+                }
+            });
+        });
+
+        $('#accept-call').click(() => {
+            $('#accept-call').hide();
+            $('#reject-call').css({ 
+            position: "absolute", 
+            left: "50%", 
+            transform: "translate(-50%, -50%)" 
+            }); 
+            socket.emit('start_call');
+            M.toast({html: 'Call connected - monitoring for fraud...'});
+            let hours = 0, minutes = 0, seconds = 0;
+            let interval;
+            function startCounter() {
+                if (!interval) {
+                    interval = setInterval(updateCounter, 1000);
+                }
+            }
+            function updateCounter() {
+                seconds++;
+                if (seconds === 60) {
+                    seconds = 0;
+                    minutes++;
+                }
+                if (minutes === 60) {
+                    minutes = 0;
+                    hours++;
+                }
+                
+                let display = String(seconds).padStart(2, '0');
+                if (minutes > 0 || hours > 0) {
+                    display = String(minutes).padStart(2, '0') + ":" + display;
+                }
+                if (hours > 0) {
+                    display = String(hours).padStart(2, '0') + ":" + display;
+                }
+                
+                document.getElementById("counter").innerText = display;
+            }
+            startCounter();
+        });
+
+        $('#reject-call').click(() => {
+            location.reload();
+        });
+
+        $('#lookup-form').submit(async (e) => {
+            e.preventDefault();
+            const number = $('#phone-number').val().trim();
+            
+            if (!number) {
+                M.toast({html: 'Please enter a phone number'});
+                return;
+            }
+
+            try {
+                $('#submit_btn').html("Please Wait");
+                const response = await fetch('/lookup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({number})
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    $('#beforeCall').hide();
+                    var userinfo = parseTrueCallerInfo(result.data);
+                    $('#IncomingCallInterface').show();
+                    $('#caller-info').html(
+                    `${userinfo.Number ? `<h3 style="color: black; font-weight: bolder;">${userinfo.Number}</h3>` : ''}
+                    ${userinfo.Name ? `<h4>${userinfo.Name}</h4>` : ''}
+                    ${userinfo.Location ? `<h4>${userinfo.Location}` : ''}
+                    ${userinfo.Country ? `${userinfo.Country}</h4>` : ''}
+                ${userinfo["Kavach Says"] ? `<h3><strong style="color:mediumvioletred;">Kavach Says:</strong> ${userinfo["Kavach Says"]}</h3>` : ''} 
+                    `
+                );
+                    $('#caller-info').show();
+                    if(userinfo.isspam==1){
+                        Swal.fire({
+                            title: "Kavach detected this call as spam",
+                            showDenyButton: true,
+                            confirmButtonText: "Report this Number",
+                            denyButtonText: `Continue to the call`
+                            }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload();
+                            } else if (result.isDenied) {
+                                Swal.close();
+                            }
+                        });
+                    }
+                    
+                } else {
+                    throw new Error(result.error || 'Failed to fetch information');
+                    $('#submit_btn').html("Look Up");
+                }
+            } catch (error) {
+                M.toast({html: `Error: ${error.message}`});
+                $('#submit_btn').html("Look Up");
+            }
+        });
+    </script>
+</body>
+</html>
